@@ -83,48 +83,42 @@ export default function PrizesPage() {
           <CardContent className="space-y-4">
             {prizes ? (
               <>
-                <div className="grid grid-cols-3 gap-3 text-center">
-                  <div className="rounded-lg p-3" style={{ background: "hsla(43,90%,50%,0.1)" }}>
-                    <p className="text-xs text-muted-foreground">סה"כ נגבה</p>
-                    <p className="text-xl font-bold" style={{ color: GOLD }}>
-                      {prizes.totalCollected.toLocaleString()}₪
+                <div className="grid grid-cols-2 gap-3 text-center">
+                  <div className="rounded-lg p-4" style={{ background: "hsla(43,90%,50%,0.1)" }}>
+                    <p className="text-xs text-muted-foreground mb-1">משתתפים</p>
+                    <p className="text-3xl font-bold" style={{ color: GOLD }}>
+                      {prizes.paidParticipants}
                     </p>
-                    <p className="text-xs text-muted-foreground">{prizes.paidParticipants} משתתפים</p>
+                    <p className="text-xs text-muted-foreground mt-1">נרשמו לתחרות</p>
                   </div>
-                  <div className="rounded-lg p-3" style={{ background: "hsla(155,60%,38%,0.1)" }}>
-                    <p className="text-xs text-muted-foreground">סה"כ פרסים</p>
-                    <p className="text-xl font-bold text-primary">
+                  <div className="rounded-lg p-4" style={{ background: "hsla(155,60%,38%,0.1)" }}>
+                    <p className="text-xs text-muted-foreground mb-1">סה"כ פרסים</p>
+                    <p className="text-3xl font-bold text-primary">
                       {prizes.prizeTotal.toLocaleString()}₪
                     </p>
-                    <p className="text-xs text-muted-foreground">{prizes.prizePct}% מהקופה</p>
-                  </div>
-                  <div className="rounded-lg p-3" style={{ background: "hsla(280,65%,50%,0.1)" }}>
-                    <p className="text-xs text-muted-foreground">עמלת פלטפורמה</p>
-                    <p className="text-xl font-bold text-purple-400">
-                      {prizes.adminCut.toLocaleString()}₪
-                    </p>
-                    <p className="text-xs text-muted-foreground">{prizes.adminCutPct}%</p>
+                    <p className="text-xs text-muted-foreground mt-1">לחלוקה בין הזוכים</p>
                   </div>
                 </div>
+                <p className="text-xs text-muted-foreground text-center">במקרה של תיקו — הפרס מתחלק שווה בין הזוכים</p>
 
                 {/* Breakdown */}
                 <div className="space-y-3">
                   <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">חלוקת הפרסים</p>
-                  {prizes.breakdown.map((b: any) => (
+                  {prizes.breakdown.filter((b: any) => b.place === 1 || b.place === 2 || b.place === 3).map((b: any) => (
                     <div key={b.place} className="space-y-1" data-testid={`prize-place-${b.place}`}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-lg">{b.place === 1 ? "🥇" : b.place === 2 ? "🥈" : b.place === 3 ? "🥉" : "🎖"}</span>
-                          <span className="text-sm font-medium">{b.label}</span>
+                          <span className="text-xl">{b.place === 1 ? "🥇" : b.place === 2 ? "🥈" : "🥉"}</span>
+                          <span className="text-sm font-semibold">{b.label}</span>
                         </div>
                         <div className="text-left">
-                          <span className="text-sm font-bold" style={{ color: PLACE_COLORS[b.place as number] || "hsl(155,60%,55%)" }}>
+                          <span className="text-base font-bold" style={{ color: PLACE_COLORS[b.place as number] }}>
                             {b.amount.toLocaleString("he-IL", { maximumFractionDigits: 0 })}₪
                           </span>
                           <span className="text-xs text-muted-foreground mr-1">({b.pct}%)</span>
                         </div>
                       </div>
-                      <PrizeBar pct={b.pct} color={PLACE_COLORS[b.place as number] || "hsl(155,60%,55%)"} />
+                      <PrizeBar pct={b.pct * 1.1} color={PLACE_COLORS[b.place as number]} />
                     </div>
                   ))}
                 </div>

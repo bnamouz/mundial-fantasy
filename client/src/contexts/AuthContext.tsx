@@ -18,7 +18,7 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (data: { name: string; email: string; phone: string; password: string }) => Promise<void>;
+  register: (data: { name: string; email: string; phone: string; password: string }) => Promise<{ paymentUrl: string }>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -29,7 +29,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
 
-  // Persist token in memory (no localStorage)
   useEffect(() => {
     if (token) {
       (window as any).__authToken__ = token;
@@ -46,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const register = async (data: { name: string; email: string; phone: string; password: string }) => {
+    // 1. Create user account
     const res = await apiRequest("POST", "/api/auth/register", {
       name: data.name,
       email: data.email,
@@ -55,6 +55,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(res.token);
     setUser(res.user);
     (window as any).__authToken__ = res.token;
+
+    // 2. Get PayPlus payment link
+    const payRes = await apiRequest("POST", "/api/payment/checkout", {});
+    return { paymentUrl: payRes.paymentUrl };
   };
 
   const logout = () => {

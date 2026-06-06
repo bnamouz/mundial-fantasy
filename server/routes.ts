@@ -483,19 +483,41 @@ export function registerRoutes(httpServer: Server, app: Express) {
     const consolationCount = Math.max(1, Math.floor(lb.length * 0.1));
     const perConsolation = lb.length > 3 ? (prizeTotal * fCon) / consolationCount : 0;
 
+    // Tie-breaking: group users by points, split prize equally within tied group
+    const pointsMap: Record<number, number> = {};
+    lb.forEach(e => { pointsMap[e.userId] = e.totalPoints; });
+
+    // Find tied groups for places 1, 2, 3
+    const place1Points = lb[0]?.totalPoints;
+    const tied1 = lb.filter(e => e.totalPoints === place1Points);
+    const remaining2 = lb.filter(e => e.totalPoints !== place1Points);
+    const place2Points = remaining2[0]?.totalPoints;
+    const tied2 = remaining2.filter(e => e.totalPoints === place2Points);
+    const remaining3 = remaining2.filter(e => e.totalPoints !== place2Points);
+    const place3Points = remaining3[0]?.totalPoints;
+    const tied3 = remaining3.filter(e => e.totalPoints === place3Points);
+
+    // Calculate split amounts
+    const prize1Each = tied1.length ? (prizeTotal * f1) / tied1.length : 0;
+    const prize2Each = tied2.length ? (prizeTotal * f2) / tied2.length : 0;
+    const prize3Each = tied3.length ? (prizeTotal * f3) / tied3.length : 0;
+
+    const tiedUserIds = new Set([...tied1, ...tied2, ...tied3].map(e => e.userId));
+
     const payoutsList: any[] = [];
     lb.forEach(entry => {
       let amount = 0;
-      if (entry.rank === 1) amount = prizeTotal * f1;
-      else if (entry.rank === 2) amount = prizeTotal * f2;
-      else if (entry.rank === 3) amount = prizeTotal * f3;
+      let rank = entry.rank;
+      if (tied1.find(e => e.userId === entry.userId)) { amount = prize1Each; rank = 1; }
+      else if (tied2.find(e => e.userId === entry.userId)) { amount = prize2Each; rank = 2; }
+      else if (tied3.find(e => e.userId === entry.userId)) { amount = prize3Each; rank = 3; }
       else if (entry.rank <= consolationCount + 3) amount = perConsolation;
 
       if (amount > 0) {
         const existing = storage.getPayout(entry.userId);
         if (!existing) {
-          storage.createPayout({ userId: entry.userId, rank: entry.rank, amount, status: 'pending' });
-          payoutsList.push({ userId: entry.userId, rank: entry.rank, amount });
+          storage.createPayout({ userId: entry.userId, rank, amount, status: 'pending' });
+          payoutsList.push({ userId: entry.userId, rank, amount, tied: tiedUserIds.has(entry.userId) });
         }
       }
     });
