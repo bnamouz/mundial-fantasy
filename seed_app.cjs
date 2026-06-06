@@ -1,8 +1,19 @@
 process.chdir('/app');
 const D=require('better-sqlite3');
 const db=new D('/app/data.db');
+
+// Create coaches table if missing
+db.prepare(`CREATE TABLE IF NOT EXISTS coaches (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  country TEXT NOT NULL,
+  country_code TEXT NOT NULL,
+  "group" TEXT
+)`).run();
+
 db.prepare('DELETE FROM players').run();
 db.prepare('DELETE FROM coaches').run();
+
 const ip=db.prepare("INSERT INTO players (name,country,country_code,position,price,trend,club_team,jersey_number,is_active,price_change,total_points,goals,assists,yellow_cards,red_cards,clean_sheets,minutes_played,saves) VALUES (?,?,?,?,?,?,?,?,1,0,0,0,0,0,0,0,0,0)");
 const ic=db.prepare('INSERT INTO coaches (name,country,country_code,"group") VALUES (?,?,?,?)');
 const rp=db.transaction(ps=>{for(const p of ps)ip.run(p.name,p.country,p.countryCode,p.position,p.price||5,p.trend||'stable',p.clubTeam||'',p.jerseyNumber||null)});
