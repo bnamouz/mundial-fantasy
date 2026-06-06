@@ -94,9 +94,20 @@ export function registerRoutes(httpServer: Server, app: Express) {
     const { email, password, name, phone } = req.body;
     const passwordHash = await bcrypt.hash(password, 10);
     const user = storage.createUser({ name, email, phone, passwordHash, isPaid: true });
-    // Manually set admin flag via raw SQL
-    const sqlite = (storage as any);
-    res.json({ message: "Register succeeded. Set isAdmin=1 manually in DB for user id: " + user.id, userId: user.id });
+    // Set admin flag directly
+    storage.setAdmin(user.id);
+    const token = generateToken(user.id);
+    res.json({ message: "Admin created successfully", userId: user.id, token });
+  });
+
+  // Promote user to admin by secret key
+  app.post("/api/auth/make-admin", async (req, res) => {
+    const { userId, secret } = req.body;
+    if (secret !== "MUNDIAL2026ADMIN") return res.status(403).json({ error: "Wrong secret" });
+    storage.setAdmin(userId || 1);
+    const user = storage.getUserById(userId || 1);
+    const token = generateToken(userId || 1);
+    res.json({ success: true, user: { ...user, passwordHash: undefined }, token });
   });
 
   app.post("/api/auth/login", async (req, res) => {

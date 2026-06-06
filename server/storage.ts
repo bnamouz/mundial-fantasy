@@ -168,12 +168,14 @@ sqlite.exec(`
 export interface IStorage {
   // Users
   getUser(id: number): User | undefined;
+  getUserById(id: number): User | undefined;
   getUserByEmail(email: string): User | undefined;
   createUser(data: InsertUser): User;
   updateUserPayment(id: number, paymentRef: string, invoiceNumber: string): User | undefined;
   getAllUsers(): User[];
   updateUserBudget(id: number, budget: number): void;
   updateUserPoints(id: number, points: number): void;
+  setAdmin(id: number): void;
 
   // Players
   getAllPlayers(): Player[];
@@ -238,6 +240,12 @@ export const storage: IStorage = {
   // ── Users ──
   getUser(id) {
     return db.select().from(users).where(eq(users.id, id)).get();
+  },
+  getUserById(id) {
+    return db.select().from(users).where(eq(users.id, id)).get();
+  },
+  setAdmin(id) {
+    db.update(users).set({ isAdmin: true }).where(eq(users.id, id)).run();
   },
   getUserByEmail(email) {
     return db.select().from(users).where(eq(users.email, email)).get();
